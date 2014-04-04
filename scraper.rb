@@ -17,7 +17,12 @@ def scrape_page(page, url)
       "description" => tr.search("td")[2].inner_text,
       "address" => tr.search("td")[3].inner_text
     }
-    p record
+    #p record
+    if (ScraperWiki.select("* from data where `council_reference`='#{record['council_reference']}'").empty? rescue true)
+      ScraperWiki.save_sqlite(['council_reference'], record)
+    else
+      puts "Skipping already saved record " + record['council_reference']
+    end
   end
 end
 
