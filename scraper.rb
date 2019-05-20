@@ -1,33 +1,31 @@
-require 'scraperwiki'
-require 'mechanize'
+require "epathway_scraper"
 
-agent = Mechanize.new
-
-url = "https://eservices.moreland.vic.gov.au/ePathway/Production/Web/GeneralEnquiry/EnquiryLists.aspx?ModuleCode=LAP"
-
-def scrape_page(page, url)
+def scrape_page(page, url, scraper)
   table = page.at("table.ContentPanel")
-  table.search("tr")[1..-1].each do |tr|
-    day, month, year = tr.search("td")[1].inner_text.split("/").map{|s| s.to_i}
+  scraper.extract_table_data_and_urls(table).each do |row|
+    data = scraper.extract_index_data(row)
     record = {
       "info_url" => url,
       "comment_url" => url,
-      "council_reference" => tr.at("td a").inner_text,
-      "date_received" => Date.new(year, month, day).to_s,
-      "description" => tr.search("td")[2].inner_text,
-      "address" => tr.search("td")[3].inner_text,
+      "council_reference" => data[:council_reference],
+      "date_received" => data[:date_received],
+      "description" => data[:description],
+      "address" => data[:address],
       "date_scraped" => Date.today.to_s
     }
-    #p record
     ScraperWiki.save_sqlite(['council_reference'], record)
   end
 end
 
-page = agent.get(url)
+scraper = EpathwayScraper::Scraper.new(
+  "https://eservices.moreland.vic.gov.au/ePathway/Production"
+)
 
-form = page.forms.first
-form.radiobuttons.first.check
-page = form.submit(form.button_with(type: "submit"))
+agent = scraper.agent
+
+url = "https://eservices.moreland.vic.gov.au/ePathway/Production/Web/GeneralEnquiry/EnquiryLists.aspx?ModuleCode=LAP"
+
+page = scraper.pick_type_of_search(:advertising)
 
 # Now do the paging magic
 number_pages =  page.at("#ctl00_MainBodyContent_mPagingControl_pageNumberLabel").inner_text.split(" ")[3].to_i
@@ -35,5 +33,5 @@ number_pages =  page.at("#ctl00_MainBodyContent_mPagingControl_pageNumberLabel")
 (1..number_pages).each do |no|
   page = agent.get("https://eservices.moreland.vic.gov.au/ePathway/Production/Web/GeneralEnquiry/EnquirySummaryView.aspx?PageNumber=#{no}")
   puts "Scraping page #{no} of results..."
-  scrape_page(page, url)
+  scrape_page(page, url, scraper)
 end
