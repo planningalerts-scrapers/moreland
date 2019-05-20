@@ -7,8 +7,9 @@ GIT
       httpclient
       sqlite_magic
 
-PATH
-  remote: ../epathway_scraper
+GIT
+  remote: https://github.com/planningalerts-scrapers/epathway_scraper.git
+  revision: 746e431143d897ce399abeb2e6f8b807aac35a3e
   specs:
     epathway_scraper (0.1.0)
       mechanize
