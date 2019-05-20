@@ -6,7 +6,6 @@ def scrape_page(page, url, scraper)
     data = scraper.extract_index_data(row)
     record = {
       "info_url" => url,
-      "comment_url" => url,
       "council_reference" => data[:council_reference],
       "date_received" => data[:date_received],
       "description" => data[:description],
